@@ -1,0 +1,260 @@
+---
+title: "AMPD Clean Data"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+date: "2024-10-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(car)
+library(ggplot2)
+
+## Renaming data frame
+AMPD_clean <- data_frame(AMPD_Prolific_September_12_2024_15_44)
+
+## Check for outliers by running descriptives statistics
+mean_duration <- mean(as.numeric(AMPD_clean$`Duration (in seconds)`), na.rm = TRUE)
+sd_duration <- sd(as.numeric(AMPD_clean$`Duration (in seconds)`), na.rm = TRUE)
+
+Q1 <- quantile(AMPD_clean$`Duration (in seconds)`, 0.25) 
+Q3 <- quantile(AMPD_clean$`Duration (in seconds)`, 0.75) 
+IQR <- Q3 - Q1
+
+## Define the lower and upper bounds for outliers
+lower_bound <- Q1 - 1.5 * IQR 
+upper_bound <- Q3 + 1.5 * IQR
+
+## Identify outliers 
+outliers <- AMPD_clean$`Duration (in seconds)`[AMPD_clean$`Duration (in seconds)` < lower_bound | AMPD_clean$`Duration (in seconds)` > upper_bound] 
+
+print(outliers)
+
+## Control data frame and download to delete unneccessary columns in Excel
+Control_df <- AMPD_clean %>% filter(Condition == "Control")
+write.csv(Control_df, file = "/Users/saragarza/Downloads/Controldf.csv", row.names = FALSE)
+
+## Bringing new clean dataset back
+Controldf <- read_csv("Downloads/Controldf.csv")
+
+## Recoding all values to numeric forms
+Controldf$AQ1_An <- case_match(Controldf$AQ1_An,
+                           "1 - none at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$AQ2_D <- case_match(Controldf$AQ2_D,
+                           "1"  ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$AQ3_F <- case_match(Controldf$AQ3_F,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$AQ4_An <- case_match(Controldf$AQ4_An,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$AQ5_C <- case_match(Controldf$AQ5_C,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$Q8.7_2 <- case_match(Controldf$Q8.7_2,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)
+
+Controldf$AQ7_Av <- case_match(Controldf$AQ7_Av,
+                           "1" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - definitely would help" ~ 9)
+
+Controldf$AQ8_H <- case_match(Controldf$AQ8_H,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)   
+
+Controldf$AQ9_P <- case_match(Controldf$AQ9_P ,
+                           "1 - not at all" ~ 1,
+                           "2" ~ 2,
+                           "3" ~ 3,
+                           "4" ~ 4,
+                           "5" ~ 5,
+                           "6" ~ 6,
+                           "7" ~ 7,
+                           "8" ~ 8,
+                           "9 - very much" ~ 9)  
+
+## Reverse Coding for item 7
+Controldf$AQ7_R <- 10 - Controldf$AQ7_Av
+
+#Control, composite score
+Controldf$AQ9Score <- rowMeans(Controldf[,c("AQ1_An", "AQ2_D","AQ3_F","AQ4_An", "AQ5_C", "Q8.7_2", "AQ7_R", "AQ8_H", "AQ9_P")])
+
+mean(Controldf$AQ9Score)
+sd(Controldf$AQ9Score)
+                           
+## AMPD data frame and download to delete unneccessary columns in Excel
+AMPD_df <- AMPD_clean %>% filter(Condition == "AMPD")
+write.csv(AMPD_df, file = "/Users/saragarza/Downloads/AMPDdf.csv", row.names = FALSE)
+
+## Bringing new clean dataset back
+AMPDdf <- read_csv("Downloads/AMPDdf.csv")
+
+## Recoding all values to numeric forms
+recodevalues <-  c("9 - very much" = 9, "8" = 8, "7" = 7, "6" = 6, "5" = 5, "4" = 4, "3" = 3, "2" = 2, "1 - none at all" = 1)
+AMPDdf$AQ1_An <- recodevalues[AMPDdf$AQ1_An]
+
+recodevalues1 <-  c("9 - very much" = 9, "8" = 8, "7" = 7, "6" = 6, "5" = 5, "4" = 4, "3" = 3, "2" = 2, "1 - not at all" = 1)
+AMPDdf$AQ2_D <- recodevalues1[AMPDdf$AQ2_D]
+AMPDdf$AQ3_F <- recodevalues1[AMPDdf$AQ3_F]
+AMPDdf$AQ4_An <- recodevalues1[AMPDdf$AQ4_An]
+AMPDdf$AQ5_C <- recodevalues1[AMPDdf$AQ5_C]
+AMPDdf$Q8.7_2 <- recodevalues1[AMPDdf$Q8.7_2]
+AMPDdf$AQ8_H <- recodevalues1[AMPDdf$AQ8_H]
+AMPDdf$AQ9_P <- recodevalues1[AMPDdf$AQ9_P]
+
+recodevalues2 <-  c("9 - definitely would help" = 9, "8" = 8, "7" = 7, "6" = 6, "5" = 5, "4" = 4, "3" = 3, "2" = 2, "1 - definitely would not help" = 1)
+
+AMPDdf$AQ7_Av <- recodevalues2[AMPDdf$AQ7_Av]
+
+## Reverse Coding for item 7
+AMPDdf$AQ7_R <- 10 - AMPDdf$AQ7_Av
+
+##AMPD, composite score
+AMPDdf$AQ9Score <- rowMeans(AMPDdf[,c("AQ1_An", "AQ2_D","AQ3_F","AQ4_An", "AQ5_C", "Q8.7_2", "AQ7_R", "AQ8_H", "AQ9_P")])
+
+mean(AMPDdf$AQ9Score)
+sd(AMPDdf$AQ9Score)
+
+## DSM data frame and download to delete unneccessary columns in Excel
+DSM_df <- AMPD_clean %>% filter(Condition == "DSM")
+write.csv(DSM_df, file = "/Users/saragarza/Downloads/DSMdf.csv", row.names = FALSE)
+
+## Bringing new clean dataset back
+DSMdf <- read_csv("Downloads/DSMdf.csv")
+
+## Recoding all values to numeric forms
+DSMdf$AQ1_An <- recodevalues[DSMdf$AQ1_An]
+
+DSMdf$AQ2_D <- recodevalues1[DSMdf$AQ2_D]
+DSMdf$AQ3_F <- recodevalues1[DSMdf$AQ3_F]
+DSMdf$AQ4_An <- recodevalues1[DSMdf$AQ4_An]
+DSMdf$AQ5_C <- recodevalues1[DSMdf$AQ5_C]
+DSMdf$Q8.7_2 <- recodevalues1[DSMdf$Q8.7_2]
+DSMdf$AQ8_H <- recodevalues1[DSMdf$AQ8_H]
+DSMdf$AQ9_P <- recodevalues1[DSMdf$AQ9_P]
+
+DSMdf$AQ7_Av <- recodevalues2[DSMdf$AQ7_Av]
+
+## Reverse Coding for item 7
+DSMdf$AQ7_R <- 10 - DSMdf$AQ7_Av
+
+##DSM, composite score
+DSMdf$AQ9Score <- rowMeans(DSMdf[,c("AQ1_An", "AQ2_D","AQ3_F","AQ4_An", "AQ5_C", "Q8.7_2", "AQ7_R", "AQ8_H", "AQ9_P")])
+
+mean(DSMdf$AQ9Score)
+sd(DSMdf$AQ9Score)
+
+## One-way Anova, create a combined data frame with composite scores
+Condition <- c(rep("Control", 130), rep("AMPD", 134), rep("DSM", 135))
+AQ9_scores <- c(Controldf$AQ9Score, AMPDdf$AQ9Score, DSMdf$AQ9Score)
+Compositedf <- data.frame(Condition, AQ9_scores)
+
+rnorm(130, mean = 4.94188, sd = 1.145231),
+                rnorm(134, mean = 4.861526, sd = 1.239937),
+                rnorm(135, mean = 4.873251, sd = 1.124067))
+
+Compositedf <- data.frame(Condition, AQ9_scores)
+
+anova_result <- aov(AQ9_scores ~ Condition, data = Compositedf)
+
+## Display ANOVA table
+summary(anova_result)
+
+## Assumptions of ANOVA
+leveneTest(AQ9_scores ~ Condition, data = Compositedf)
+
+anova_result$coefficients
+
+TukeyHSD(anova_result)
+
+lm.model <- lm(AQ9_scores ~ Condition)
+summary(lm.model)
+
+## Residual Plots
+plot(residuals(anova_result))
+
+## Boxplot
+
+# Create boxplot for condition 1 (df_IS1)
+plot1 <- ggplot(Compositedf, aes(x = as.factor(Condition), y = AQ9_scores)) +
+  geom_boxplot(fill = "purple") + 
+  labs(title = "Average Stigmatizing Attitudes Score",
+       x = "Condition", y = "Average AQ-9 Scores") +
+  theme_minimal()
+  
+plot1
+
+
+
